@@ -1,0 +1,16 @@
+{
+  "id": "/app/",
+  "name": "OurPeople — Histórias da nossa terra",
+  "short_name": "OurPeople",
+  "lang": "pt-PT",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#f6f4ed",
+  "theme_color": "#234d42",
+  "icons": [
+    { "src": "/app/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

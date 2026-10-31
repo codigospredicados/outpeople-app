@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#234d42">
+  <meta name="description" content="Descubra as pessoas que dão nome às nossas ruas e participe na história local.">
+  <title>OurPeople — Explore as nossas ruas</title>
+  <link rel="manifest" href="/app/manifest.webmanifest">
+  <link rel="icon" href="/app/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/app/styles.css">
+  <link rel="stylesheet" href="/app/map.css">
+  <script src="/app/app.js" type="module"></script>
+</head>
+<body>
+  <header class="site-header"><a class="brand" href="/app/" aria-label="OurPeople, início"><span class="brand-mark" aria-hidden="true">op.</span> ourpeople</a><nav class="app-nav" aria-label="Navegação principal"><a id="nav-explore" href="#explorar" aria-current="page">Explorar</a><a id="nav-account" href="#conta">Criar conta</a></nav></header>
+  <main>
+    <section id="explore-view" class="explorer" aria-labelledby="map-title">
+      <div class="explorer-heading"><div><p class="eyebrow">AS HISTÓRIAS COMEÇAM AQUI</p><h1 id="map-title">Um lugar. Muitas histórias.</h1><p class="muted">Explore as ruas e os lugares da sua comunidade.</p></div><button id="locate" class="button primary locate-button" type="button" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>A minha localização</button></div>
+      <div class="street-alert-controls"><button id="toggle-street-alerts" class="button secondary" type="button" aria-pressed="false" disabled>Ativar alertas de ruas</button><span class="small muted">Receba um aviso na app ao entrar numa rua com possível nome de pessoa.</span></div>
+      <div id="street-alert" class="street-alert" role="alert" aria-atomic="true" hidden><span class="street-alert-icon" aria-hidden="true">!</span><div><strong>Esta rua poderá ter nome de uma pessoa</strong><p id="street-alert-name"></p><p class="small">O nome sugere uma personalidade. A associação está por confirmar.</p></div><button id="dismiss-street-alert" class="text-button" type="button" aria-label="Fechar aviso de rua">Fechar</button></div>
+      <div class="map-frame">
+        <div id="map" aria-label="Mapa interativo OpenStreetMap" aria-describedby="map-help"></div>
+        <button id="reset-map" class="map-reset" type="button" disabled>Vista inicial</button>
+      </div>
+      <div class="map-messages"><p id="map-status" class="small muted" role="status" aria-live="polite">A carregar o mapa…</p><button id="retry-map" class="text-button small" type="button" hidden>Voltar a carregar</button><p id="location-status" class="small" role="status" aria-live="polite"></p></div>
+      <div class="street-result"><p id="current-street" hidden>Arruamento provável: <strong id="current-street-name"></strong> <a id="street-source" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">Ver no OpenStreetMap ↗</a></p><p id="street-status" class="small muted" role="status" aria-live="polite"></p><button id="retry-street" class="text-button small" type="button" hidden>Voltar a identificar a rua</button></div>
+      <div class="map-info"><p id="map-help">Arraste o mapa para explorar e use + e − para aproximar ou afastar.</p><a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Comunicar um erro no mapa ↗</a></div>
+      <p class="location-note small muted">A localização é opcional. Ao usá-la, a posição é enviada à API para consultar os arruamentos OpenStreetMap. Os alertas acompanham a deslocação apenas enquanto o mapa está visível.</p>
+    </section>
+    <div id="account-view" class="layout" hidden>
+    <section class="story" aria-labelledby="story-title">
+      <p class="eyebrow">CADA RUA TEM UMA HISTÓRIA</p>
+      <h1 id="story-title">Os nomes são da rua.<br>As histórias são nossas.</h1>
+      <p>Conheça as pessoas que dão nome aos lugares por onde passa. Junte a sua voz à memória da comunidade.</p>
+      <div class="street-art" aria-hidden="true"><div class="street-sign">RUA<br><strong>DAS NOSSAS HISTÓRIAS</strong><span>Um lugar para recordar. Um convite a participar.</span></div><div class="street-line"></div><span class="art-caption">PESSOAS · LUGARES · MEMÓRIAS</span></div>
+      <p class="story-note">A consulta de informação será aberta a todos. Crie uma conta para participar à medida que forem disponibilizadas novas funcionalidades.</p>
+    </section>
+    <section class="card" aria-labelledby="form-title">
+      <div id="auth-panel">
+        <p class="eyebrow">A SUA COMUNIDADE COMEÇA AQUI</p>
+        <h2 id="form-title">Faça parte da história.</h2>
+        <p id="form-intro" class="muted">Crie a sua conta OurPeople.</p>
+        <div class="socials" aria-label="Continuar com uma conta existente">
+          <a id="google" class="button social" href="/api/auth/google/start?target=app" aria-disabled="true"><span aria-hidden="true">G</span>Continuar com Google</a>
+          <a id="facebook" class="button social" href="/api/auth/facebook/start?target=app" aria-disabled="true"><span aria-hidden="true">f</span>Continuar com Facebook</a>
+        </div>
+        <p id="providers-note" class="small muted">A verificar os métodos de acesso…</p>
+        <div class="divider"><span>ou com email</span></div>
+        <form id="auth-form">
+          <div id="name-group" class="field"><label for="name">Nome</label><input id="name" name="name" autocomplete="name" required minlength="2" maxlength="100" placeholder="Como se chama?"><span class="field-error" id="name-error"></span></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="nome@exemplo.pt"><span class="field-error" id="email-error"></span></div>
+          <div class="field"><label for="password">Palavra-passe</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128" aria-describedby="password-help"><button id="toggle-password" class="show-password" type="button" aria-label="Mostrar palavra-passe" aria-pressed="false">Mostrar</button></div><span id="password-help" class="small muted">Use entre 12 e 128 caracteres.</span><span class="field-error" id="password-error"></span></div>
+          <div id="confirm-group" class="field"><label for="confirm">Confirmar palavra-passe</label><input id="confirm" name="confirm" type="password" autocomplete="new-password" required maxlength="128"></div>
+          <p id="form-status" class="status" role="status" aria-live="polite"></p>
+          <button id="submit" class="button primary" type="submit">Criar conta <span aria-hidden="true">↗</span></button>
+        </form>
+        <p class="switch"><span id="switch-text">Já tem conta?</span> <button id="switch-mode" class="text-button" type="button">Iniciar sessão</button></p>
+      </div>
+      <div id="account-panel" hidden>
+        <span class="success-mark" aria-hidden="true">✓</span><p class="eyebrow">BEM-VINDO À COMUNIDADE</p><h2 id="welcome"></h2><p>A sua conta está pronta. Este é o primeiro passo para participar na história dos nossos lugares.</p>
+        <dl class="account-details"><dt>Email</dt><dd id="account-email"></dd><dt>Método de acesso</dt><dd id="account-provider"></dd></dl>
+        <a class="button primary" href="#explorar">Explorar o mapa ↗</a>
+        <p class="muted small account-roadmap">A identificação de personalidades e a publicação de conteúdos serão disponibilizadas nas próximas etapas.</p>
+        <button id="logout" class="button secondary" type="button">Terminar sessão</button>
+        <p id="account-status" class="status" role="status"></p>
+      </div>
+    </section>
+    </div>
+  </main>
+  <footer>OurPeople <span>Uma história local. Muitas vozes.</span></footer>
+</body>
+</html>

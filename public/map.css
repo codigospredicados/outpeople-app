@@ -1,0 +1,124 @@
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.app-nav a {
+  text-decoration: none;
+  padding: 9px 15px;
+  border-radius: 7px;
+}
+
+.app-nav a[aria-current="page"] {
+  background: #e4e9de;
+  font-weight: 650;
+}
+
+.explorer {
+  max-width: 1240px;
+  margin: 26px auto 38px;
+  padding: 0 40px;
+}
+
+.explorer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.explorer-heading h1 {
+  font-size: clamp(32px, 4vw, 46px);
+  margin-bottom: 12px;
+}
+
+.explorer-heading p:last-child { margin-bottom: 0; }
+.explorer-heading .eyebrow { margin-bottom: 12px; }
+
+.locate-button {
+  width: auto;
+  flex-shrink: 0;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.map-frame {
+  position: relative;
+  border: 1px solid #ced5cc;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #e5e9df;
+  isolation: isolate;
+}
+
+#map {
+  height: clamp(360px, 60vh, 650px);
+  width: 100%;
+  background: #e5e9df;
+  font-family: inherit;
+}
+
+.map-reset {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  padding: 10px 14px;
+  border: 1px solid #ced5cc;
+  border-radius: 8px;
+  background: white;
+  color: var(--green);
+  font-size: 12px;
+  box-shadow: 0 2px 8px #0001;
+}
+
+.map-reset:disabled { opacity: .5; }
+.map-messages { margin-top: 12px; }
+.map-messages p { margin-bottom: 4px; }
+.map-messages p:empty { display: none; }
+.map-messages .text-button { padding-left: 0; margin-bottom: 6px; }
+.map-info { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--muted); }
+.map-info p { margin-bottom: 4px; }
+.map-info a { flex-shrink: 0; }
+.location-note { margin-top: 6px; }
+.account-roadmap { margin-top: 18px; }
+.leaflet-container .leaflet-control-attribution { font-size: 10px; background: #ffffffed; }
+.leaflet-container .leaflet-control-attribution a { color: #234d42; }
+.leaflet-control-zoom a { color: var(--green); }
+.location-dot { filter: drop-shadow(0 1px 3px #0004); }
+.street-alert-controls { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.street-alert-controls .button { width: auto; flex-shrink: 0; font-size: 12px; }
+.street-alert-controls [aria-pressed="true"] { background: var(--green); color: white; }
+.street-alert { display: flex; align-items: flex-start; gap: 12px; padding: 18px; margin-bottom: 16px; background: #fff1d6; border: 1px solid #d7b66f; border-radius: 12px; color: #584017; }
+.street-alert-icon { display: grid; place-items: center; flex-shrink: 0; border: 1px solid currentColor; width: 25px; height: 25px; border-radius: 50%; font-weight: 750; }
+.street-alert strong { font-size: 14px; }
+.street-alert { position: sticky; top: 12px; z-index: 1100; }
+.street-alert p { margin: 5px 0 0; overflow-wrap: anywhere; }
+.street-alert .text-button { margin-left: auto; font-size: 11px; color: #584017; }
+.street-result { font-size: 13px; }
+.street-result p:empty { display: none; }
+.street-result a { font-size: 11px; margin-left: 8px; }
+.street-result p { margin-bottom: 8px; }
+.street-result .text-button { padding-left: 0; margin-bottom: 8px; }
+
+@media (max-width: 650px) {
+  .app-nav { gap: 0; font-size: 12px; }
+  .app-nav a { padding: 8px 10px; }
+  .brand { font-size: 20px; gap: 7px; }
+  .brand-mark { font-size: 23px; }
+  .explorer { margin-top: 12px; padding: 0 20px; }
+  .explorer-heading { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .explorer-heading h1 { font-size: 35px; max-width: 290px; }
+  .explorer-heading .muted { font-size: 14px; }
+  .locate-button { font-size: 13px; }
+  #map { height: max(360px, 49vh); }
+  .map-frame { border-radius: 12px; }
+  .map-info { flex-direction: column; gap: 6px; }
+  .location-note { font-size: 11px; margin-top: 12px; }
+  .street-alert-controls { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .street-alert { gap: 8px; padding: 14px 10px; }
+  .street-alert-icon { width: 21px; height: 21px; font-size: 12px; }
+}
