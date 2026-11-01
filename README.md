@@ -30,6 +30,7 @@ Todos os pedidos `/api/*` são encaminhados pelo servidor para `API_URL`, preser
 ## Funcionalidades
 
 - Mapa público Leaflet/OpenStreetMap, com zoom, navegação e vista inicial de Portugal continental.
+- Camadas opcionais de distritos, concelhos e freguesias, com limites oficiais DGT/CAOP 2025 e nomes ao selecionar áreas.
 - Registo, início/fim de sessão e consulta da conta; métodos sociais disponíveis segundo a configuração da API.
 - Localização opcional, com ponto e círculo de precisão.
 - «Ativar alertas de ruas» acompanha a deslocação enquanto o mapa está visível e mostra um aviso quando o nome do arruamento sugere uma pessoa.
@@ -40,9 +41,31 @@ As posições são enviadas à API para identificar o arruamento. A classificaç
 
 A API é um serviço separado: precisa de estar disponível para registo, autenticação e identificação de ruas. A publicação de conteúdos e a confirmação da identidade das personalidades ainda não estão implementadas.
 
+## Camadas administrativas
+
+O seletor «Limites administrativos» permite ativar separadamente ou em conjunto:
+
+| Camada | Cor | Zoom mínimo |
+| --- | --- | --- |
+| Distritos | Roxo | 5 |
+| Concelhos | Ocre | 8 |
+| Freguesias | Verde azulado, tracejado | 11 |
+
+As camadas começam desligadas e são carregadas apenas quando selecionadas e com zoom suficiente. Ao selecionar uma área, aparece o nome, código administrativo, concelho/distrito quando disponíveis e atribuição à fonte. Os limites aparecem por cima da cartografia e abaixo do marcador de localização.
+
+Fonte: **Direção-Geral do Território — CAOP 2025**, licença CC BY 4.0. Os mosaicos vetoriais são consultados no [serviço OGC API oficial](https://ogcapi.dgterritorio.gov.pt/), coleções `distritos`, `municipios` e `freguesias`, usando WebMercatorQuad. A [CAOP](https://www.dgterritorio.gov.pt/atividades/cartografia/cartografia-tematica/caop) é mantida pela DGT.
+
+**Cobertura desta versão: Portugal continental.** Os Açores e a Madeira não estão incluídos nas três coleções verificadas; essa limitação fica visível na interface. As versões da divisão administrativa correspondem à edição identificada, não a uma classificação inferida a partir do OpenStreetMap.
+
+O navegador pede os mosaicos ao servidor da própria app em `/map-data/:colecao/:z/:x/:y.pbf`. Não precisa de acesso à API, MongoDB ou autenticação. O servidor aceita apenas as três coleções e coordenadas válidas até zoom 14, ajustando a ordem linha/coluna do serviço DGT. Leaflet amplia os mosaicos do zoom 14 para níveis superiores. Não são descarregados os polígonos completos do país.
+
+Existe cache HTTP de uma hora e cache em memória limitada a 128 mosaicos / 16 MiB, com agregação de pedidos iguais e máximo de quatro consultas DGT simultâneas. Mosaicos superiores a 2 MiB e respostas inválidas são rejeitados. Falhas mostram uma mensagem e permitem tentar novamente. Desativar uma camada ou abrir a conta retira-a do mapa; a seleção mantém-se ao regressar.
+
+Leaflet.VectorGrid é servido localmente. Não há novas variáveis de ambiente a configurar nem alterações necessárias no serviço API para estas camadas. A atribuição fica disponível no seletor e no mapa enquanto as camadas estiverem ativas. Os testes usam pequenas amostras oficiais, identificadas em `test/fixtures/README.md`, sem pedidos automáticos aos servidores públicos.
+
 ## PWA e cartografia
 
-O manifesto, ícones e service worker permitem abrir a interface sem rede depois da primeira visita com ligação. API e cartografia requerem rede. A cache da PWA inclui apenas ficheiros estáticos; não guarda respostas da API, dados da conta nem mosaicos OSM.
+O manifesto, ícones e service worker permitem abrir a interface sem rede depois da primeira visita com ligação. API e cartografia requerem rede. A cache da PWA inclui apenas ficheiros estáticos e bibliotecas; não guarda respostas da API, dados da conta, mosaicos OSM nem mosaicos administrativos.
 
 Leaflet é servido localmente. Os mosaicos são pedidos à área visível em `https://tile.openstreetmap.org`, com atribuição visível e cache HTTP normal. Não há descarga antecipada de regiões nem modo de mapas offline. Para utilização de maior volume selecione um serviço de cartografia adequado; consulte a [política de mosaicos OSM](https://operations.osmfoundation.org/policies/tiles/) e a [documentação Leaflet](https://leafletjs.com/examples/quick-start/).
 
@@ -59,4 +82,4 @@ Os ícones PNG estão incluídos. Em Windows, pode regenerá-los com `./scripts/
 
 Este serviço não precisa de volume nem de base de dados. Não depende dos ficheiros ou do ciclo de deploy dos restantes repositórios. Em domínios diferentes, app e backoffice têm sessões próprias.
 
-O workflow de CI instala dependências com `npm ci` e verifica ficheiros públicos e proxy HTTP, incluindo cookies, origens, redirecionamentos e falhas da API.
+O workflow de CI instala dependências com `npm ci` e verifica ficheiros públicos e proxy HTTP, incluindo cookies, origens, redirecionamentos e falhas da API. Verifica também validação, cache, ordem das coordenadas e erros do serviço de limites administrativos. Os testes de integração de navegador no workspace cobrem seleção das camadas, geometrias e nomes reais, zoom mínimo, coexistência no telemóvel e recuperação após falha.

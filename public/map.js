@@ -1,5 +1,6 @@
-import * as L from '/app/vendor/leaflet/leaflet-src.esm.js';
+import L from './leaflet.js';
 import { createStreetAlerts } from './street-alerts.js';
+import { createAdministrativeLayers } from './administrative-layers.js';
 
 const INITIAL_CENTER = [39.6, -8];
 const INITIAL_ZOOM = 7;
@@ -10,6 +11,7 @@ export function createMap() {
   const reset = document.getElementById('reset-map');
   const retry = document.getElementById('retry-map');
   const map = L.map('map', { scrollWheelZoom: false }).setView(INITIAL_CENTER, INITIAL_ZOOM);
+  const administrativeLayers = createAdministrativeLayers(map);
   map.zoomControl.setPosition('topleft');
   const zoomIn = document.querySelector('.leaflet-control-zoom-in');
   const zoomOut = document.querySelector('.leaflet-control-zoom-out');
@@ -66,5 +68,5 @@ export function createMap() {
       else accuracyCircle = L.circle(point, { radius: coords.accuracy, color: '#234d42', weight: 1, fillOpacity: .1, interactive: false }).addTo(map);
       if (center) map.fitBounds(accuracyCircle.getBounds(), { maxZoom: 17, padding: [35, 35] });
   } });
-  return { resize: () => requestAnimationFrame(() => map.invalidateSize({ pan: false })), setVisible: alerts.setVisible };
+  return { resize: () => requestAnimationFrame(() => map.invalidateSize({ pan: false })), setVisible(value) { alerts.setVisible(value); administrativeLayers.setVisible(value); } };
 }

@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import http from 'node:http';
 import https from 'node:https';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createBoundaryTiles, BoundaryTileError } from './boundary-tiles.js';
 
 const COMPONENT = 'app';
 const DEFAULT_PORT = 3001;
@@ -12,7 +13,7 @@ function cleanHeaders(headers) {
   return Object.fromEntries(Object.entries(headers).filter(([name]) => !blocked.has(name.toLowerCase())));
 }
 
-export function createFrontendApp({ env = process.env } = {}) {
+export function createFrontendApp({ env = process.env, boundaryTiles = createBoundaryTiles() } = {}) {
   const production = env.NODE_ENV === 'production';
   if (production && !env.API_URL) throw new Error('Configure API_URL com a origem do serviço API.');
   const api = new URL(env.API_URL || 'http://localhost:3000');
@@ -31,6 +32,15 @@ export function createFrontendApp({ env = process.env } = {}) {
     } }
   }));
   app.get('/health', (req, res) => res.json({ status: 'ok', service: `ourpeople-${COMPONENT}` }));
+  app.get('/map-data/:collection/:z/:x/:y.pbf', async (req, res) => {
+    try {
+      const { collection, z, x, y } = req.params;
+      const body = await boundaryTiles.get(collection, z, x, y);
+      res.set('Cache-Control', 'public, max-age=3600').type('application/vnd.mapbox-vector-tile').send(body);
+    } catch (error) {
+      res.status(error instanceof BoundaryTileError ? error.status : 502).set('Cache-Control', 'no-store').json({ error: 'Não foi possível carregar os limites administrativos.' });
+    }
+  });
   // Fixed upstream only. Preserve cookies, Origin, status and redirects without
   // exposing API credentials or requiring cross-site cookies in the browser.
   app.use((req, res, next) => {
@@ -57,6 +67,7 @@ export function createFrontendApp({ env = process.env } = {}) {
     req.pipe(upstream);
   });
   app.use('/app/vendor/leaflet', express.static(fileURLToPath(new URL('./node_modules/leaflet/dist', import.meta.url))));
+  app.use('/app/vendor/vectorgrid', express.static(fileURLToPath(new URL('./node_modules/leaflet.vectorgrid/dist', import.meta.url))));
   app.get('/', (req, res) => res.redirect(`/${COMPONENT}/`));
   app.use(`/${COMPONENT}`, express.static(fileURLToPath(new URL('./public', import.meta.url)), {
     dotfiles: 'deny', setHeaders: res => res.set('Cache-Control', 'no-cache')

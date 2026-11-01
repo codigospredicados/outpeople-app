@@ -4,6 +4,7 @@ ENV NODE_ENV=production PORT=8080
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY server.js ./server.js
+COPY boundary-tiles.js ./boundary-tiles.js
 COPY public ./public
 USER node
 EXPOSE 8080
