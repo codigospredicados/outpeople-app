@@ -33,13 +33,25 @@ Todos os pedidos `/api/*` são encaminhados pelo servidor para `API_URL`, preser
 - Camadas opcionais de distritos, concelhos e freguesias, com limites oficiais DGT/CAOP 2025 e nomes ao selecionar áreas.
 - Registo, início/fim de sessão e consulta da conta; métodos sociais disponíveis segundo a configuração da API.
 - Localização opcional, com ponto e círculo de precisão.
+- Rua identificada com acesso à ficha e aos conteúdos públicos, mesmo sem conta.
+- Formulário de recolha para utilizadores autenticados: texto, fotografia pela câmara e seleção de imagens do dispositivo, com pré-visualização e remoção antes de publicar.
 - «Ativar alertas de ruas» acompanha a deslocação enquanto o mapa está visível e mostra um aviso quando o nome do arruamento sugere uma pessoa.
 - Avisos podem ser fechados; não são repetidos no mesmo arruamento. Novas ruas permitem novos avisos.
 - Acompanhamento pausa ao ocultar o mapa/página; não utiliza localização em segundo plano nem notificações do sistema.
 
 As posições são enviadas à API para identificar o arruamento. A classificação é indicativa, com associação por confirmar. Cruzamentos ambíguos e precisão insuficiente não originam alertas. Oscilações inferiores a 15 m não geram nova consulta; pedidos ficam separados por pelo menos 15 segundos. Geolocalização requer HTTPS ou localhost.
 
-A API é um serviço separado: precisa de estar disponível para registo, autenticação e identificação de ruas. A publicação de conteúdos e a confirmação da identidade das personalidades ainda não estão implementadas.
+A API é um serviço separado: precisa de estar disponível para registo, autenticação, identificação de ruas, conteúdos e fotografias. A confirmação da identidade das personalidades fica para uma etapa futura.
+
+## Recolha de informação
+
+Depois de identificar a localização, «Consultar e contribuir nesta rua» abre `/app/#rua/:id`. A ficha mostra os conteúdos partilhados, com nome do autor, data e fotografias. «Partilhar informação ou fotografias» abre `/app/#rua/:id/recolher`. A API guarda estes dados no MongoDB para os próximos visitantes da rua.
+
+Sem sessão, o formulário encaminha para o registo ou início de sessão e regressa à mesma rua após o acesso. Se a sessão expirar durante o preenchimento, texto e fotografias continuam em memória durante a navegação para o acesso por email; não sobrevivem a uma atualização da página ou saída para um fornecedor social. Não existe envio offline. Uma falha de rede mantém o formulário e indica que deve consultar os conteúdos antes de repetir um envio sem confirmação.
+
+É possível publicar texto (até 5000 caracteres), fotografias ou ambos. Cada publicação aceita até quatro imagens JPEG, PNG ou WebP, de 8 MiB cada. A câmara traseira é sugerida com `capture="environment"`; a disponibilidade e a interface da câmara dependem do dispositivo e navegador. A seleção de imagens existentes funciona num botão separado. HEIC não é suportado nesta etapa.
+
+Apenas os recursos estáticos da PWA entram na cache do service worker. Conteúdos são consultados pela rede e as fotografias públicas usam a cache HTTP definida pela API. Não há um mapa ou catálogo de conteúdos pré-descarregados.
 
 ## Camadas administrativas
 

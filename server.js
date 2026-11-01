@@ -28,7 +28,7 @@ export function createFrontendApp({ env = process.env, boundaryTiles = createBou
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     contentSecurityPolicy: { directives: {
       'upgrade-insecure-requests': production ? [] : null,
-      'img-src': ["'self'", 'data:', 'https://tile.openstreetmap.org']
+      'img-src': ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org']
     } }
   }));
   app.get('/health', (req, res) => res.json({ status: 'ok', service: `ourpeople-${COMPONENT}` }));

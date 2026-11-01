@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/app/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/app/styles.css">
   <link rel="stylesheet" href="/app/map.css">
+  <link rel="stylesheet" href="/app/street.css">
   <script src="/app/app.js" type="module"></script>
 </head>
 <body>
@@ -19,7 +20,7 @@
     <section id="explore-view" class="explorer" aria-labelledby="map-title">
       <div class="explorer-heading"><div><p class="eyebrow">AS HISTÓRIAS COMEÇAM AQUI</p><h1 id="map-title">Um lugar. Muitas histórias.</h1><p class="muted">Explore as ruas e os lugares da sua comunidade.</p></div><button id="locate" class="button primary locate-button" type="button" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>A minha localização</button></div>
       <div class="street-alert-controls"><button id="toggle-street-alerts" class="button secondary" type="button" aria-pressed="false" disabled>Ativar alertas de ruas</button><span class="small muted">Receba um aviso na app ao entrar numa rua com possível nome de pessoa.</span></div>
-      <div id="street-alert" class="street-alert" role="alert" aria-atomic="true" hidden><span class="street-alert-icon" aria-hidden="true">!</span><div><strong>Esta rua poderá ter nome de uma pessoa</strong><p id="street-alert-name"></p><p class="small">O nome sugere uma personalidade. A associação está por confirmar.</p></div><button id="dismiss-street-alert" class="text-button" type="button" aria-label="Fechar aviso de rua">Fechar</button></div>
+      <div id="street-alert" class="street-alert" role="alert" aria-atomic="true" hidden><span class="street-alert-icon" aria-hidden="true">!</span><div><strong>Esta rua poderá ter nome de uma pessoa</strong><p id="street-alert-name"></p><p class="small">O nome sugere uma personalidade. A associação está por confirmar.</p><a id="open-alert-street" class="small" href="#explorar">Consultar a rua e partilhar informação ↗</a></div><button id="dismiss-street-alert" class="text-button" type="button" aria-label="Fechar aviso de rua">Fechar</button></div>
       <fieldset class="boundary-controls" aria-describedby="boundaries-help"><legend>Limites administrativos</legend><div class="boundary-options"><label><input id="layer-distritos" type="checkbox"><span class="boundary-swatch districts" aria-hidden="true"></span>Distritos</label><label><input id="layer-municipios" type="checkbox"><span class="boundary-swatch municipalities" aria-hidden="true"></span>Concelhos</label><label><input id="layer-freguesias" type="checkbox"><span class="boundary-swatch parishes" aria-hidden="true"></span>Freguesias</label></div><p id="boundaries-help">Portugal continental · <a href="https://www.dgterritorio.gov.pt/atividades/cartografia/cartografia-tematica/caop" target="_blank" rel="noopener noreferrer">DGT — CAOP 2025</a>. Selecione uma área no mapa para consultar o nome.</p></fieldset>
       <p id="boundaries-status" class="small muted boundary-status" role="status" aria-live="polite"></p><button id="retry-boundaries" class="text-button small" type="button" hidden>Voltar a carregar limites</button>
       <div class="map-frame">
@@ -27,9 +28,30 @@
         <button id="reset-map" class="map-reset" type="button" disabled>Vista inicial</button>
       </div>
       <div class="map-messages"><p id="map-status" class="small muted" role="status" aria-live="polite">A carregar o mapa…</p><button id="retry-map" class="text-button small" type="button" hidden>Voltar a carregar</button><p id="location-status" class="small" role="status" aria-live="polite"></p></div>
-      <div class="street-result"><p id="current-street" hidden>Arruamento provável: <strong id="current-street-name"></strong> <a id="street-source" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">Ver no OpenStreetMap ↗</a></p><p id="street-status" class="small muted" role="status" aria-live="polite"></p><button id="retry-street" class="text-button small" type="button" hidden>Voltar a identificar a rua</button></div>
+      <div class="street-result"><div id="current-street" hidden><p>Arruamento provável: <strong id="current-street-name"></strong> <a id="street-source" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">Ver no OpenStreetMap ↗</a></p><a id="open-street" class="button primary" href="#explorar">Consultar e contribuir nesta rua ↗</a></div><p id="street-status" class="small muted" role="status" aria-live="polite"></p><button id="retry-street" class="text-button small" type="button" hidden>Voltar a identificar a rua</button></div>
       <div class="map-info"><p id="map-help">Arraste o mapa para explorar e use + e − para aproximar ou afastar.</p><a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Comunicar um erro no mapa ↗</a></div>
       <p class="location-note small muted">A localização é opcional. Ao usá-la, a posição é enviada à API para consultar os arruamentos OpenStreetMap. Os alertas acompanham a deslocação apenas enquanto o mapa está visível.</p>
+    </section>
+    <section id="street-view" class="street-page" aria-labelledby="street-title" hidden>
+      <a class="text-button" href="#explorar">← Voltar ao mapa</a>
+      <header class="street-heading"><p class="eyebrow">A MEMÓRIA DESTA RUA</p><h1 id="street-title" tabindex="-1">A carregar a rua…</h1><p id="street-classification" class="muted"></p><a id="street-detail-source" target="_blank" rel="noopener noreferrer" hidden>Ver no OpenStreetMap ↗</a><p class="small muted">Confirme se este é o arruamento onde se encontra antes de contribuir.</p></header>
+      <div id="street-actions" hidden><a id="add-contribution" class="button primary" href="#explorar">Partilhar informação ou fotografias ↗</a></div>
+      <p id="street-page-status" role="status" aria-live="polite"></p><button id="reload-contributions" class="text-button" type="button" hidden>Voltar a carregar conteúdos</button>
+      <section id="contribution-editor" class="card contribution-editor" aria-labelledby="contribution-title" hidden>
+        <h2 id="contribution-title" tabindex="-1">O que sabe sobre esta rua?</h2>
+        <p class="muted">Partilhe uma história, informação sobre a personalidade ou uma fotografia do local.</p>
+        <p id="contribution-auth-status" role="status">A verificar a sessão…</p>
+        <div id="contribution-login" hidden><p id="contribution-login-note">Crie uma conta ou inicie sessão para publicar nesta rua. Todos podem consultar os conteúdos.</p><button id="contribution-signin" class="button primary" type="button">Criar conta ou iniciar sessão ↗</button></div>
+        <form id="contribution-form" hidden>
+          <div class="field"><label for="contribution-text">Texto</label><textarea id="contribution-text" name="text" rows="7" maxlength="5000" aria-describedby="contribution-help" placeholder="Conte o que sabe. Se possível, indique as suas fontes."></textarea><p id="contribution-help" class="small muted">Até 5000 caracteres. Escreva um texto ou junte fotografias.</p></div>
+          <fieldset class="photo-picker"><legend>Fotografias</legend><div class="photo-actions"><button id="take-photo" class="button secondary" type="button">Tirar fotografia</button><button id="choose-photos" class="button secondary" type="button">Escolher do dispositivo</button></div><input id="camera-photo" class="file-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" tabindex="-1"><input id="device-photos" class="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple tabindex="-1"><p class="small muted">Até 4 fotografias JPEG, PNG ou WebP, com 8 MB cada. No smartphone, a câmara abre se o navegador o permitir.</p><div id="selected-photos" class="photo-grid"></div><p id="photo-status" role="status" aria-live="polite"></p></fieldset>
+          <p class="small muted">O texto, as fotografias e o seu nome ficam públicos nesta rua. Publique apenas imagens que pode partilhar.</p>
+          <p id="contribution-status" role="status" aria-live="polite"></p>
+          <button id="publish-contribution" class="button primary" type="submit">Publicar nesta rua ↗</button>
+        </form>
+        <a id="cancel-contribution" class="text-button" href="#explorar">Voltar aos conteúdos da rua</a>
+      </section>
+      <section id="street-content" aria-labelledby="street-content-title" hidden><h2 id="street-content-title">Histórias e contributos</h2><p id="contributions-empty" class="muted" hidden>Ainda não há conteúdos nesta rua. Seja a primeira pessoa a contribuir.</p><div id="contributions-list" class="contributions-list"></div><button id="more-contributions" class="button secondary" type="button" hidden>Ver mais conteúdos</button></section>
     </section>
     <div id="account-view" class="layout" hidden>
     <section class="story" aria-labelledby="story-title">
@@ -37,7 +59,7 @@
       <h1 id="story-title">Os nomes são da rua.<br>As histórias são nossas.</h1>
       <p>Conheça as pessoas que dão nome aos lugares por onde passa. Junte a sua voz à memória da comunidade.</p>
       <div class="street-art" aria-hidden="true"><div class="street-sign">RUA<br><strong>DAS NOSSAS HISTÓRIAS</strong><span>Um lugar para recordar. Um convite a participar.</span></div><div class="street-line"></div><span class="art-caption">PESSOAS · LUGARES · MEMÓRIAS</span></div>
-      <p class="story-note">A consulta de informação será aberta a todos. Crie uma conta para participar à medida que forem disponibilizadas novas funcionalidades.</p>
+      <p class="story-note">A consulta de informação é aberta a todos. Crie uma conta para partilhar texto e fotografias nas ruas que visita.</p>
     </section>
     <section class="card" aria-labelledby="form-title">
       <div id="auth-panel">
@@ -64,7 +86,7 @@
         <span class="success-mark" aria-hidden="true">✓</span><p class="eyebrow">BEM-VINDO À COMUNIDADE</p><h2 id="welcome"></h2><p>A sua conta está pronta. Este é o primeiro passo para participar na história dos nossos lugares.</p>
         <dl class="account-details"><dt>Email</dt><dd id="account-email"></dd><dt>Método de acesso</dt><dd id="account-provider"></dd></dl>
         <a class="button primary" href="#explorar">Explorar o mapa ↗</a>
-        <p class="muted small account-roadmap">A identificação de personalidades e a publicação de conteúdos serão disponibilizadas nas próximas etapas.</p>
+        <p class="muted small account-roadmap">Identifique uma rua no mapa para consultar e partilhar histórias ou fotografias.</p>
         <button id="logout" class="button secondary" type="button">Terminar sessão</button>
         <p id="account-status" class="status" role="status"></p>
       </div>

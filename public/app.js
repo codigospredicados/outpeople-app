@@ -1,4 +1,9 @@
+import { createStreetPage } from './street-page.js';
 const $ = id => document.getElementById(id);
+const streetPage = createStreetPage({ onRequireAuth() {
+  try { sessionStorage.setItem('street-return', location.hash); } catch {}
+  location.hash = '#conta';
+}, onSessionExpired() { showUser(null); } });
 let mode = 'register';
 let busy = false;
 const providerNames = { email: 'Email e palavra-passe', google: 'Google', facebook: 'Facebook' };
@@ -7,14 +12,18 @@ let mapLoading;
 
 function showView() {
   const account = location.hash === '#conta';
+  const street = location.hash.match(/^#rua\/([1-9]\d{0,15})(\/recolher)?$/);
   $('account-view').hidden = !account;
-  $('explore-view').hidden = account;
-  mapController?.setVisible(!account);
+  $('street-view').hidden = !street;
+  $('explore-view').hidden = account || Boolean(street);
+  mapController?.setVisible(!account && !street);
+  if (street) streetPage.open(street[1]);
+  else streetPage.close();
   for (const [id, current] of [['nav-account', account], ['nav-explore', !account]]) {
     if (current) $(id).setAttribute('aria-current', 'page');
     else $(id).removeAttribute('aria-current');
   }
-  if (!account) {
+  if (!account && !street) {
     mapLoading ??= import('./map.js').then(({ createMap }) => { mapController = createMap(); }).catch(() => {
       $('map-status').textContent = 'Não foi possível iniciar o mapa. Verifique a ligação e atualize a página.';
     });
@@ -39,10 +48,15 @@ function clearErrors() {
   $('confirm').removeAttribute('aria-invalid');
 }
 function showUser(user) {
+  streetPage.setUser(user);
   $('auth-panel').hidden = Boolean(user);
   $('account-panel').hidden = !user;
   $('nav-account').textContent = user ? 'A minha conta' : 'Criar conta';
   if (!user) return;
+  try {
+    const target = sessionStorage.getItem('street-return');
+    if (target && /^#rua\/[1-9]\d{0,15}\/recolher$/.test(target) && (location.hash === '#conta' || !location.hash)) { sessionStorage.removeItem('street-return'); location.hash = target; }
+  } catch {}
   $('welcome').textContent = `Olá, ${user.name}.`;
   $('account-email').textContent = user.email;
   $('account-provider').textContent = providerNames[user.provider];
@@ -125,7 +139,7 @@ const authResult = new URLSearchParams(location.search).get('auth');
 if (authResult) { $('form-status').textContent = messages[authResult] || messages.failed; history.replaceState(null, '', '/app/#conta'); }
 showView();
 await Promise.allSettled([
-  request('/auth/me').then(({ user }) => showUser(user)).catch(() => { $('form-status').textContent = 'Não foi possível ligar ao servidor. Tente novamente.'; }),
+  request('/auth/me').then(({ user }) => showUser(user)).catch(() => { showUser(null); $('form-status').textContent = 'Não foi possível ligar ao servidor. Tente novamente.'; }),
   request('/auth/providers').then(({ providers }) => {
     for (const { id, enabled } of providers) { $(id).setAttribute('aria-disabled', String(!enabled)); if (!enabled) $(id).setAttribute('title', 'Disponível após configuração do serviço.'); }
     $('providers-note').textContent = providers.some(p => !p.enabled) ? 'Alguns métodos de acesso ainda não estão disponíveis. Pode usar email.' : '';

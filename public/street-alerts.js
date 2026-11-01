@@ -60,6 +60,8 @@ export function createStreetAlerts({ onPosition }) {
     currentStreet = key;
     $('current-street').hidden = false;
     $('current-street-name').textContent = street.name;
+    $('open-street').href = /^[1-9]\d{0,15}$/.test(street.id) ? `#rua/${street.id}` : '#explorar';
+    $('open-alert-street').href = $('open-street').href;
     const source = $('street-source');
     // Only allow links to the provider's numeric OSM way identifiers.
     source.href = /^\d+$/.test(street.id) ? `https://www.openstreetmap.org/way/${street.id}` : 'https://www.openstreetmap.org/copyright';
