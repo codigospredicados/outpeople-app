@@ -1,9 +1,11 @@
 import L from './leaflet.js';
+import { createStreetRetry, streetRetryAfter, streetRetryDelay } from './street-retry.js';
 
 const STREET_ZOOM = 16;
 const $ = id => document.getElementById(id);
 
 export function createMapSelection(map) {
+  const retry = createStreetRetry($('retry-selection'));
   let marker, point, controller, timer, version = 0, visible = true;
   const usable = () => visible && document.visibilityState === 'visible';
   function cancel() {
@@ -16,7 +18,7 @@ export function createMapSelection(map) {
     if (marker) map.removeLayer(marker);
     marker = null;
     $('map-selection-status').textContent = '';
-    $('retry-selection').hidden = $('clear-selection').hidden = true;
+    retry.hide(); $('clear-selection').hidden = true;
   }
   function content(title, description, street) {
     const node = document.createElement('div'); node.className = 'selected-street-popup';
@@ -48,7 +50,7 @@ export function createMapSelection(map) {
       });
       const data = await response.json();
       if (token !== version || !usable()) return;
-      if (!response.ok) throw new Error(data.error || 'Não foi possível identificar a rua. Tente novamente.');
+      if (!response.ok) { streetRetryAfter(response); throw new Error(data.error || 'Não foi possível identificar a rua. Tente novamente.'); }
       if (data.status === 'found' && data.street && /^[1-9]\d{0,15}$/.test(data.street.id) && typeof data.street.name === 'string') {
         const description = data.street.potentialPerson
           ? 'Possível nome de pessoa. A associação está por confirmar.'
@@ -63,7 +65,7 @@ export function createMapSelection(map) {
     } catch (error) {
       if (token !== version || !usable() || error.name === 'AbortError') return;
       show('Não foi possível identificar a rua.', !navigator.onLine ? 'Sem ligação. Ligue-se à internet e tente novamente.' : error.name === 'TimeoutError' ? 'A consulta demorou demasiado. Tente novamente.' : error.message);
-      $('retry-selection').hidden = false;
+      retry.show();
     } finally { clearTimeout(timeout); clearTimeout(slow); if (token === version) controller = null; }
   }
   function select(selected) {
@@ -82,6 +84,10 @@ export function createMapSelection(map) {
     marker.openPopup();
     $('map-selection-status').textContent = 'A identificar a rua no ponto selecionado…';
     $('clear-selection').hidden = false;
+    if (streetRetryDelay()) {
+      show('Consulta em pausa.', `Aguarde ${streetRetryDelay()} segundos antes de tentar novamente.`);
+      retry.show(); return;
+    }
     const token = version;
     // Coalesce rapid clicks/double taps before consulting the street service.
     timer = setTimeout(() => lookup(selected, token), 350);

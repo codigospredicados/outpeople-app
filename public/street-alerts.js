@@ -1,3 +1,5 @@
+import { createStreetRetry, streetRetryAfter, streetRetryDelay } from './street-retry.js';
+
 const LOOKUP_INTERVAL = 15000;
 const MIN_MOVEMENT = 15;
 
@@ -13,6 +15,7 @@ export function createStreetAlerts({ onPosition }) {
   const locationStatus = $('location-status');
   const streetStatus = $('street-status');
   const alert = $('street-alert');
+  const retry = createStreetRetry($('retry-street'));
   let enabled = false;
   let visible = true;
   let watchId = null;
@@ -38,10 +41,10 @@ export function createStreetAlerts({ onPosition }) {
   function clearStreet() {
     alert.hidden = true;
     $('current-street').hidden = true;
-    $('retry-street').hidden = true;
+    retry.hide();
   }
   function showResult(data) {
-    $('retry-street').hidden = true;
+    retry.hide();
     if (data.status !== 'found' || !data.street) {
       clearStreet();
       currentStreet = dismissedStreet = null;
@@ -76,6 +79,11 @@ export function createStreetAlerts({ onPosition }) {
   function inspectPosition(coords) {
     lastPosition = coords;
     if (!usable()) return;
+    if (streetRetryDelay()) {
+      cancelLookup(); clearStreet();
+      streetStatus.textContent = `Consulta em pausa. Aguarde ${streetRetryDelay()} segundos antes de tentar novamente.`;
+      retry.show(); return;
+    }
     if (coords.accuracy > 50) {
       cancelLookup();
       showResult({ status: 'imprecise' });
@@ -105,14 +113,14 @@ export function createStreetAlerts({ onPosition }) {
         });
         const data = await response.json();
         if (version !== generation || !usable()) return;
-        if (!response.ok) throw new Error(data.error || 'Não foi possível identificar a rua.');
+        if (!response.ok) { streetRetryAfter(response); throw new Error(data.error || 'Não foi possível identificar a rua.'); }
         lastChecked = coords;
         showResult(data);
       } catch (error) {
         if (version !== generation || !usable() || error.name === 'AbortError') return;
         clearStreet();
         streetStatus.textContent = !navigator.onLine ? 'Sem ligação. Ligue-se à internet para identificar a rua.' : error.name === 'TimeoutError' ? 'O serviço de arruamentos demorou demasiado a responder. Tente novamente.' : error.message === 'Failed to fetch' ? 'Não foi possível identificar a rua neste momento. Tente novamente.' : error.message;
-        $('retry-street').hidden = false;
+        retry.show();
       } finally { clearTimeout(timeout); clearTimeout(slow); if (version === generation) controller = null; }
     }, Math.max(0, LOOKUP_INTERVAL - (Date.now() - lastStarted)));
   }
