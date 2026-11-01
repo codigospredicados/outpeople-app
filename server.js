@@ -66,7 +66,7 @@ export function createFrontendApp({ env = process.env, boundaryTiles = createBou
       response.on('error', () => res.destroy());
       response.pipe(res);
     });
-    upstream.setTimeout(30000, () => upstream.destroy(new Error('timeout')));
+    upstream.setTimeout(65000, () => upstream.destroy(new Error('timeout')));
     upstream.on('error', () => {
       if (!res.headersSent) res.status(502).set('Cache-Control', 'no-store').json({ error: 'Não foi possível ligar à API. Tente novamente.' });
       else res.destroy();

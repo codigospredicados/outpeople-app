@@ -44,6 +44,8 @@ As posições são enviadas à API para identificar o arruamento. A classificaç
 
 A API é um serviço separado: precisa de estar disponível para registo, autenticação, identificação de ruas, conteúdos e fotografias. A confirmação da identidade das personalidades fica para uma etapa futura.
 
+O serviço externo de arruamentos pode demorar a responder. A identificação por toque e por GPS espera até 60 segundos; após oito segundos apresenta um aviso de consulta demorada. O proxy aguarda até 65 segundos de inatividade, para receber a resposta da API (40 segundos por omissão, máximo configurável de 50). As falhas de serviço são apresentadas sem as atribuir automaticamente à ligação do utilizador. Pedidos cancelados ou substituídos não atualizam o resultado atual.
+
 ### Selecionar uma rua no mapa
 
 Aproxime o mapa e toque numa rua. Se a vista estiver afastada (abaixo do zoom 16), o primeiro toque aproxima a área e pede um novo toque sobre a rua. Um marcador castanho distingue o ponto escolhido da localização GPS. A app consulta o mesmo serviço de arruamentos e apresenta o nome, a classificação indicativa e uma ligação para os conteúdos e recolha. Não solicita geolocalização.

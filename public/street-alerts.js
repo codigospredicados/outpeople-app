@@ -93,6 +93,10 @@ export function createStreetAlerts({ onPosition }) {
     controller = requestController;
     lookupTimer = setTimeout(async () => {
       lastStarted = Date.now();
+      const timeout = setTimeout(() => requestController.abort(new DOMException('Timeout', 'TimeoutError')), 60000);
+      const slow = setTimeout(() => {
+        if (version === generation && usable()) streetStatus.textContent = 'A identificar a rua. A consulta está a demorar mais do que o habitual. Aguarde um pouco…';
+      }, 8000);
       try {
         const response = await fetch('/api/location/street', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -107,9 +111,9 @@ export function createStreetAlerts({ onPosition }) {
       } catch (error) {
         if (version !== generation || !usable() || error.name === 'AbortError') return;
         clearStreet();
-        streetStatus.textContent = navigator.onLine ? 'Não foi possível identificar a rua neste momento. Tente novamente.' : 'Sem ligação. Ligue-se à internet para identificar a rua.';
+        streetStatus.textContent = !navigator.onLine ? 'Sem ligação. Ligue-se à internet para identificar a rua.' : error.name === 'TimeoutError' ? 'O serviço de arruamentos demorou demasiado a responder. Tente novamente.' : error.message === 'Failed to fetch' ? 'Não foi possível identificar a rua neste momento. Tente novamente.' : error.message;
         $('retry-street').hidden = false;
-      } finally { if (version === generation) controller = null; }
+      } finally { clearTimeout(timeout); clearTimeout(slow); if (version === generation) controller = null; }
     }, Math.max(0, LOOKUP_INTERVAL - (Date.now() - lastStarted)));
   }
   function receivePosition(coords, center) {

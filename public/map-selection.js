@@ -35,7 +35,10 @@ export function createMapSelection(map) {
   }
   async function lookup(selected, token) {
     const requestController = new AbortController(); controller = requestController;
-    const timeout = setTimeout(() => requestController.abort(new DOMException('Timeout', 'TimeoutError')), 15000);
+    const timeout = setTimeout(() => requestController.abort(new DOMException('Timeout', 'TimeoutError')), 60000);
+    const slow = setTimeout(() => {
+      if (token === version && usable()) $('map-selection-status').textContent = 'A identificar a rua. A consulta está a demorar mais do que o habitual. Aguarde um pouco…';
+    }, 8000);
     try {
       const response = await fetch('/api/location/street', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -61,7 +64,7 @@ export function createMapSelection(map) {
       if (token !== version || !usable() || error.name === 'AbortError') return;
       show('Não foi possível identificar a rua.', !navigator.onLine ? 'Sem ligação. Ligue-se à internet e tente novamente.' : error.name === 'TimeoutError' ? 'A consulta demorou demasiado. Tente novamente.' : error.message);
       $('retry-selection').hidden = false;
-    } finally { clearTimeout(timeout); if (token === version) controller = null; }
+    } finally { clearTimeout(timeout); clearTimeout(slow); if (token === version) controller = null; }
   }
   function select(selected) {
     if (!usable()) return;
