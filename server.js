@@ -33,12 +33,21 @@ export function createFrontendApp({ env = process.env, boundaryTiles = createBou
   }));
   app.get('/health', (req, res) => res.json({ status: 'ok', service: `ourpeople-${COMPONENT}` }));
   app.get('/map-data/:collection/:z/:x/:y.pbf', async (req, res) => {
+    const controller = new AbortController();
+    const cancel = () => { if (!res.writableFinished) controller.abort(); };
+    req.on('aborted', cancel);
+    res.on('close', cancel);
     try {
       const { collection, z, x, y } = req.params;
-      const body = await boundaryTiles.get(collection, z, x, y);
+      const body = await boundaryTiles.get(collection, z, x, y, { signal: controller.signal });
       res.set('Cache-Control', 'public, max-age=3600').type('application/vnd.mapbox-vector-tile').send(body);
     } catch (error) {
+      if (controller.signal.aborted) return;
+      if (!(error instanceof BoundaryTileError) || error.status >= 500) console.warn('Falha de limites administrativos:', { layer: req.params.collection, code: error.code || error.name });
       res.status(error instanceof BoundaryTileError ? error.status : 502).set('Cache-Control', 'no-store').json({ error: 'Não foi possível carregar os limites administrativos.' });
+    } finally {
+      req.removeListener('aborted', cancel);
+      res.removeListener('close', cancel);
     }
   });
   // Fixed upstream only. Preserve cookies, Origin, status and redirects without

@@ -59,7 +59,11 @@ Fonte: **Direção-Geral do Território — CAOP 2025**, licença CC BY 4.0. Os 
 
 O navegador pede os mosaicos ao servidor da própria app em `/map-data/:colecao/:z/:x/:y.pbf`. Não precisa de acesso à API, MongoDB ou autenticação. O servidor aceita apenas as três coleções e coordenadas válidas até zoom 14, ajustando a ordem linha/coluna do serviço DGT. Leaflet amplia os mosaicos do zoom 14 para níveis superiores. Não são descarregados os polígonos completos do país.
 
-Existe cache HTTP de uma hora e cache em memória limitada a 128 mosaicos / 16 MiB, com agregação de pedidos iguais e máximo de quatro consultas DGT simultâneas. Mosaicos superiores a 2 MiB e respostas inválidas são rejeitados. Falhas mostram uma mensagem e permitem tentar novamente. Desativar uma camada ou abrir a conta retira-a do mapa; a seleção mantém-se ao regressar.
+Existe cache HTTP de uma hora e cache em memória limitada a 128 mosaicos / 16 MiB, com agregação de pedidos iguais e máximo de quatro consultas DGT simultâneas. Cada consulta à fonte tem um limite de 25 segundos. Mosaicos superiores a 2 MiB e respostas inválidas são rejeitados. Uma falha temporária tem uma repetição automática no navegador; falhas persistentes mostram uma mensagem e permitem tentar novamente.
+
+Os erros pertencem apenas aos mosaicos da área visível. Ao arrastar ou aproximar o mapa, pedidos de áreas abandonadas são cancelados e os seus erros deixam de afetar a nova vista. O servidor retira pedidos cancelados da fila e interrompe a consulta externa se já não houver outro utilizador à espera do mesmo mosaico. Não cancela pedidos partilhados por utilizadores que ainda precisam desses dados. Os logs de falha identificam a camada e o tipo de erro (tempo excedido, erro HTTP ou resposta inválida), sem credenciais ou dados da conta.
+
+Desativar uma camada ou abrir a conta retira-a do mapa; a seleção mantém-se ao regressar. As verificações de navegador incluem emulação Android, zoom ao nível da rua, recuperação automática e recuperação após erro ao mudar de área.
 
 Leaflet.VectorGrid é servido localmente. Não há novas variáveis de ambiente a configurar nem alterações necessárias no serviço API para estas camadas. A atribuição fica disponível no seletor e no mapa enquanto as camadas estiverem ativas. Os testes usam pequenas amostras oficiais, identificadas em `test/fixtures/README.md`, sem pedidos automáticos aos servidores públicos.
 

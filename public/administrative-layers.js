@@ -10,7 +10,7 @@ const definitions = [
 ];
 let plugin;
 function loadPlugin() {
-  plugin ||= import('/app/vendor/vectorgrid/Leaflet.VectorGrid.bundled.min.js');
+  plugin ||= import('/app/vendor/vectorgrid/Leaflet.VectorGrid.bundled.min.js').catch(error => { plugin = null; throw error; });
   return plugin;
 }
 
@@ -18,10 +18,10 @@ export function createAdministrativeLayers(map) {
   const status = document.getElementById('boundaries-status');
   const retry = document.getElementById('retry-boundaries');
   let visible = true;
-  const states = definitions.map(definition => ({ ...definition, input: document.getElementById(`layer-${definition.id}`), layer: null, error: false, loading: false, version: 0 }));
+  const states = definitions.map(definition => ({ ...definition, input: document.getElementById(`layer-${definition.id}`), layer: null, error: false, loading: false, version: 0, tiles: new Map() }));
   function updateStatus() {
     const selected = states.filter(state => state.input.checked);
-    const errors = selected.filter(state => state.error);
+    const errors = selected.filter(hasErrors);
     retry.hidden = !errors.length || !navigator.onLine;
     if (!selected.length) { status.textContent = ''; return; }
     if (!navigator.onLine) { status.textContent = 'Sem ligação. Os limites administrativos precisam de acesso à internet.'; return; }
@@ -30,8 +30,16 @@ export function createAdministrativeLayers(map) {
     if (errors.length) messages.push(`Não foi possível carregar: ${errors.map(state => state.label).join(', ')}.`);
     const waiting = selected.filter(state => map.getZoom() < state.minZoom);
     if (waiting.length) messages.push(`Aproxime o mapa para ver ${waiting.map(state => `${state.label.toLowerCase()} (zoom ${state.minZoom})`).join(' e ')}.`);
-    if (selected.some(state => state.loading && !state.error)) messages.push('A carregar limites administrativos…');
+    if (selected.some(state => state.loading && !hasErrors(state))) messages.push('A carregar limites administrativos…');
     status.textContent = messages.join(' ');
+  }
+  function hasErrors(state) { return state.error || [...state.tiles.values()].some(tile => tile.error); }
+  const tileKey = coords => `${coords.z}/${coords.x}/${coords.y}`;
+  function cancelTile(state, coords) {
+    const key = tileKey(coords);
+    state.tiles.get(key)?.controller.abort();
+    state.tiles.delete(key);
+    updateStatus();
   }
   function popupContent(state, properties) {
     const content = document.createElement('div');
@@ -66,13 +74,39 @@ export function createAdministrativeLayers(map) {
           attribution: ATTRIBUTION,
           vectorTileLayerStyles: { [`cont_${state.id}`]: { color: state.color, weight: state.weight, fill: true, fillColor: state.color, fillOpacity: .025, dashArray: state.id === 'freguesias' ? '4,3' : null } }
         });
-        // VectorGrid returns an array for failed HTTP responses and an object
-        // for valid MVTs (including empty ocean tiles). Surface errors safely.
+        // Track failures per visible tile. Pan/zoom must discard old failures
+        // and abort requests for tiles that the user no longer needs.
         const originalLoad = layer._getVectorTilePromise.bind(layer);
-        layer._getVectorTilePromise = coords => originalLoad(coords).then(tile => {
-          if (Array.isArray(tile.layers)) { state.error = true; updateStatus(); }
-          return tile;
-        }).catch(() => { state.error = true; updateStatus(); return { layers: {} }; });
+        layer._getVectorTilePromise = async coords => {
+          const key = tileKey(coords);
+          state.tiles.get(key)?.controller.abort();
+          const record = { controller: new AbortController(), error: false };
+          state.tiles.set(key, record);
+          const current = () => state.tiles.get(key) === record && !record.controller.signal.aborted;
+          for (let attempt = 0; attempt < 2 && current(); attempt++) {
+            try {
+              // VectorGrid starts fetch synchronously, so each invocation gets
+              // its own AbortSignal even though layer options are shared.
+              layer.options.fetchOptions = { signal: record.controller.signal };
+              const tile = await originalLoad(coords);
+              if (!current()) return { layers: {} };
+              // An array means HTTP failure; an object can be a valid empty tile.
+              if (Array.isArray(tile.layers)) throw new Error('Tile request failed');
+              record.error = false; updateStatus();
+              return tile;
+            } catch {
+              if (!current()) return { layers: {} };
+              if (attempt === 0) { await new Promise(resolve => setTimeout(resolve, 750)); continue; }
+              record.error = true; updateStatus();
+            }
+          }
+          return { layers: {} };
+        };
+        layer.on('tileunload', event => cancelTile(state, event.coords));
+        layer.on('remove', () => {
+          for (const tile of state.tiles.values()) tile.controller.abort();
+          state.tiles.clear(); state.loading = false; updateStatus();
+        });
         layer.on('loading', () => { state.loading = true; updateStatus(); });
         layer.on('load', () => { state.loading = false; updateStatus(); });
         layer.on('click', event => { if (state.input.checked) L.popup().setLatLng(event.latlng).setContent(popupContent(state, event.layer.properties)).openOn(map); });
@@ -89,7 +123,7 @@ export function createAdministrativeLayers(map) {
   window.addEventListener('offline', syncAll);
   window.addEventListener('online', syncAll);
   retry.addEventListener('click', () => {
-    for (const state of states.filter(state => state.input.checked && state.error)) {
+    for (const state of states.filter(state => state.input.checked && hasErrors(state))) {
       state.error = false;
       if (state.layer && map.hasLayer(state.layer)) state.layer.redraw(); else sync(state);
     }

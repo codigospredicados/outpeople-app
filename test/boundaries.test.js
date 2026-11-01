@@ -53,3 +53,56 @@ test('administrative tiles work independently of API authentication and keep a b
   const bad = await fetch(`${base}/map-data/other/8/121/98.pbf`);
   assert.equal(bad.status, 400); assert.equal(bad.headers.get('cache-control'), 'no-store');
 });
+
+test('cancelling one viewer does not interrupt another viewer sharing the same tile', async () => {
+  let finish;
+  let upstreamSignal;
+  let calls = 0;
+  const tiles = createBoundaryTiles({ request: async (_url, options) => {
+    calls++; upstreamSignal = options.signal;
+    return new Promise(resolve => { finish = () => resolve(tileResponse()); });
+  } });
+  const firstController = new AbortController();
+  const first = tiles.get('freguesias', 11, 972, 784, { signal: firstController.signal });
+  const second = tiles.get('freguesias', 11, 972, 784);
+  await new Promise(resolve => setImmediate(resolve));
+  const cancelled = assert.rejects(first, { name: 'AbortError' });
+  firstController.abort(); await cancelled;
+  assert.equal(upstreamSignal.aborted, false);
+  finish(); assert.deepEqual(await second, fixture); assert.equal(calls, 1);
+});
+
+test('obsolete queued and active tiles are cancelled so the next viewport can load', async () => {
+  const calls = [];
+  const tiles = createBoundaryTiles({ request: async (url, { signal }) => {
+    calls.push(url);
+    return new Promise((resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+    });
+  } });
+  const controllers = Array.from({ length: 5 }, () => new AbortController());
+  const requests = controllers.map((controller, i) => tiles.get('freguesias', 11, 972 + i, 784, { signal: controller.signal }));
+  const settled = Promise.allSettled(requests);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls.length, 4);
+  // Cancel the fifth tile while it is still queued, then cancel active work.
+  controllers[4].abort();
+  for (const controller of controllers.slice(0, 4)) controller.abort();
+  const results = await settled;
+  assert.ok(results.every(result => result.status === 'rejected' && result.reason.name === 'AbortError'));
+  assert.equal(calls.length, 4);
+});
+
+test('slow upstreams produce an identifiable timeout and can be retried', async () => {
+  let slow = true;
+  const tiles = createBoundaryTiles({ timeoutMs: 20, request: async (_url, { signal }) => {
+    if (!slow) return tileResponse();
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Missing timeout')), 1000);
+      signal.addEventListener('abort', () => { clearTimeout(timer); reject(signal.reason); }, { once: true });
+    });
+  } });
+  await assert.rejects(tiles.get('freguesias', 11, 972, 784), error => error.code === 'BOUNDARY_UPSTREAM_TIMEOUT');
+  slow = false;
+  assert.deepEqual(await tiles.get('freguesias', 11, 972, 784), fixture);
+});
