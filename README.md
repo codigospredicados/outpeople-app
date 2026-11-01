@@ -34,6 +34,7 @@ Todos os pedidos `/api/*` são encaminhados pelo servidor para `API_URL`, preser
 - Registo, início/fim de sessão e consulta da conta; métodos sociais disponíveis segundo a configuração da API.
 - Localização opcional, com ponto e círculo de precisão.
 - Rua identificada com acesso à ficha e aos conteúdos públicos, mesmo sem conta.
+- Seleção de uma rua por clique/toque no mapa, sem permissões de localização, com nome, indício de nome de pessoa e acesso à mesma ficha pública.
 - Formulário de recolha para utilizadores autenticados: texto, fotografia pela câmara e seleção de imagens do dispositivo, com pré-visualização e remoção antes de publicar.
 - «Ativar alertas de ruas» acompanha a deslocação enquanto o mapa está visível e mostra um aviso quando o nome do arruamento sugere uma pessoa.
 - Avisos podem ser fechados; não são repetidos no mesmo arruamento. Novas ruas permitem novos avisos.
@@ -42,6 +43,14 @@ Todos os pedidos `/api/*` são encaminhados pelo servidor para `API_URL`, preser
 As posições são enviadas à API para identificar o arruamento. A classificação é indicativa, com associação por confirmar. Cruzamentos ambíguos e precisão insuficiente não originam alertas. Oscilações inferiores a 15 m não geram nova consulta; pedidos ficam separados por pelo menos 15 segundos. Geolocalização requer HTTPS ou localhost.
 
 A API é um serviço separado: precisa de estar disponível para registo, autenticação, identificação de ruas, conteúdos e fotografias. A confirmação da identidade das personalidades fica para uma etapa futura.
+
+### Selecionar uma rua no mapa
+
+Aproxime o mapa e toque numa rua. Se a vista estiver afastada (abaixo do zoom 16), o primeiro toque aproxima a área e pede um novo toque sobre a rua. Um marcador castanho distingue o ponto escolhido da localização GPS. A app consulta o mesmo serviço de arruamentos e apresenta o nome, a classificação indicativa e uma ligação para os conteúdos e recolha. Não solicita geolocalização.
+
+Cruzes de ruas e pontos sem arruamento nomeado dão resultados inconclusivos, com instruções para escolher outro ponto. Falhas de rede/serviço permitem repetir a consulta; selecionar outro ponto cancela a consulta anterior. Cliques rápidos são agregados durante 350 ms. Aplicam-se os limites existentes da API/Overpass, sem repetição automática de consultas.
+
+Com camadas administrativas ativas, cliques em vistas amplas mostram a informação administrativa; a partir do zoom 16 selecionam a rua. A seleção é limpa ao sair do mapa, ocultar a página, repor a vista inicial ou usar «Limpar seleção no mapa». Alertas GPS mantêm o seu funcionamento independente.
 
 ## Recolha de informação
 

@@ -89,6 +89,15 @@
 .leaflet-container .leaflet-control-attribution a { color: #234d42; }
 .leaflet-control-zoom a { color: var(--green); }
 .location-dot { filter: drop-shadow(0 1px 3px #0004); }
+.selected-street-marker { background: #ad631b; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 0 2px #ad631b, 0 2px 6px #0004; }
+.selected-street-marker span { display: block; width: 6px; height: 6px; margin: 6px; border-radius: 50%; background: white; }
+.selected-street-popup { font-family: system-ui, sans-serif; line-height: 1.5; overflow-wrap: anywhere; }
+.selected-street-popup strong { display: block; font-size: 15px; }
+.selected-street-popup p { margin: 8px 0; }
+.selected-street-popup a { display: inline-block; padding: 7px 0; color: var(--green); font-weight: 650; }
+.map-selection-messages p { margin: 10px 0 4px; }
+.map-selection-messages p:empty { display: none; }
+.map-selection-messages .text-button { margin: 0 12px 10px 0; padding-left: 0; }
 .boundary-controls { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; padding: 12px 16px; min-width: 0; }
 .boundary-controls legend { font-size: 12px; font-weight: 650; padding: 0 6px; }
 .boundary-options { display: flex; flex-wrap: wrap; gap: 12px 24px; }

@@ -109,7 +109,12 @@ export function createAdministrativeLayers(map) {
         });
         layer.on('loading', () => { state.loading = true; updateStatus(); });
         layer.on('load', () => { state.loading = false; updateStatus(); });
-        layer.on('click', event => { if (state.input.checked) L.popup().setLatLng(event.latlng).setContent(popupContent(state, event.layer.properties)).openOn(map); });
+        layer.on('click', event => {
+          if (!state.input.checked) return;
+          if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
+          if (map.getZoom() >= 16) { map.fire('streetselect', { latlng: event.latlng }); return; }
+          L.popup().setLatLng(event.latlng).setContent(popupContent(state, event.layer.properties)).openOn(map);
+        });
         state.layer = layer;
       }
       state.layer.addTo(map);

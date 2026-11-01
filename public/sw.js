@@ -1,6 +1,6 @@
-const CACHE = 'ourpeople-shell-v6';
+const CACHE = 'ourpeople-shell-v7';
 const SHELL = ['/app/', '/app/styles.css', '/app/app.js', '/app/map.js', '/app/map.css', '/app/street-alerts.js', '/app/leaflet.js', '/app/administrative-layers.js', '/app/vendor/vectorgrid/Leaflet.VectorGrid.bundled.min.js', '/app/vendor/leaflet/leaflet-src.esm.js', '/app/vendor/leaflet/leaflet.css', '/app/vendor/leaflet/images/layers.png', '/app/vendor/leaflet/images/layers-2x.png', '/app/icon.svg', '/app/icon-192.png', '/app/icon-512.png', '/app/manifest.webmanifest'];
-SHELL.push('/app/street-page.js', '/app/street.css');
+SHELL.push('/app/street-page.js', '/app/street.css', '/app/map-selection.js');
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('ourpeople-shell-') && key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener('fetch', event => {

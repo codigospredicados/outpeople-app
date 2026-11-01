@@ -15,7 +15,7 @@ function close(server) {
 test('repository serves its own public assets and never exposes server or Git files', async t => {
   const server = http.createServer(createFrontendApp({ env: {} }));
   const origin = await listen(server); t.after(() => close(server));
-  for (const asset of ["","app.js","styles.css","map.js","map.css","street-alerts.js","street-page.js","street.css","leaflet.js","administrative-layers.js","sw.js","icon-192.png","manifest.webmanifest","vendor/leaflet/leaflet-src.esm.js","vendor/leaflet/leaflet.css","vendor/vectorgrid/Leaflet.VectorGrid.bundled.min.js"]) {
+  for (const asset of ["","app.js","styles.css","map.js","map-selection.js","map.css","street-alerts.js","street-page.js","street.css","leaflet.js","administrative-layers.js","sw.js","icon-192.png","manifest.webmanifest","vendor/leaflet/leaflet-src.esm.js","vendor/leaflet/leaflet.css","vendor/vectorgrid/Leaflet.VectorGrid.bundled.min.js"]) {
     const response = await fetch(`${origin}/${component}/${asset}`);
     assert.equal(response.status, 200, asset);
     assert.match(response.headers.get('content-security-policy'), /script-src 'self'/);
